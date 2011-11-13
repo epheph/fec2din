@@ -29,6 +29,7 @@ if ( $1 == "INSTANCE" ) {
 	print "Type: " $10
 	print "Public IP: " $17 " (" $4 ")"
 	print "Private IP: " $18
+	print "Region: " $12
 	print "Public Key: " $7
 
 	split( $11, date_part, "T" )

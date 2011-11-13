@@ -2,6 +2,9 @@ This is a small bash script (which wraps a small awk script) to provide human-re
 
 This script requires ec2-describe-instances to be properly set up with exported environment variables and has been tested against ec2-api-tools version 1.4.4.3.
 
+EC2 API Tools are available here:
+http://aws.amazon.com/developertools/351
+
 Example:
 $ ec2din
 RESERVATION	r-57192e11	103757199432	production
@@ -17,6 +20,7 @@ AMI: ami-a7f539ce
 Type: t1.micro
 Public IP: 50.99.41.60 (ec2-50-99-41-60.compute-1.amazonaws.com)
 Private IP: 10.99.241.197
+Region: us-east-1d
 Public Key: production
 Start Time: 2011-11-09
 Security Group: production
