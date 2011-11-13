@@ -1,0 +1,57 @@
+#!/bin/bash
+
+set -a
+
+RUN_DIN=0
+
+FILE="" # operate on standard input, unless we set this
+
+if [ "$( tty )" != 'not a tty' ]
+then
+	RUN_DIN=1
+	FILE=$(mktemp -t ec2din)
+	ec2-describe-instances > $FILE
+fi
+
+
+awk '
+BEGIN { FS="	" }
+
+{
+
+if ( $1 == "RESERVATION" ) {
+	last_reservation_group=$4
+}
+if ( $1 == "INSTANCE" ) {
+	print ""
+	print "Instance: " $2
+	print "AMI: " $3
+	print "Type: " $10
+	print "Public IP: " $17 " (" $4 ")"
+	print "Private IP: " $18
+	print "Public Key: " $7
+
+	split( $11, date_part, "T" )
+	simple_date=date_part[1]
+
+	# Uncomment this if you want time, too...
+	# split( date_part[2], time_part, "+" )
+	# simple_date=simple_date " @ " time_part[1]
+	
+	print "Start Date: " simple_date
+
+	security_group = $29
+	if ( length( last_reservation_group ) ) {
+		# friendly name, not always available (VPC)
+		security_group = last_reservation_group
+	}
+	print "Security Group: " security_group
+	print "Block Devices: "
+
+}
+if ( $1 == "BLOCKDEVICE" ) {
+	print "\t" $2
+}
+
+}
+' $FILE
