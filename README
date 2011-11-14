@@ -30,3 +30,23 @@ Block Devices:
 	/dev/sdk
 
 
+Or if you want to use filters:
+
+$ ec2-describe-instances -F instance-type=m1.large | fec2din 
+Instance: i-917abf52
+AMI: ami-a7f539ce
+Type: m1.large
+Public IP: 185.29.176.45 (ec2-185-29.176.45.compute-1.amazonaws.com)
+Private IP: 10.97.101.219
+Region: us-east-1a
+Public Key: devel
+Start Time: 2011-11-10
+Security Group: staging
+Block Devices: 
+	/dev/sda1
+	/dev/sdj
+
+
+Installation
+=================================
+Put fec2din in your path, chmod +x. Ensure you can run ec2din with no options by setting up the cert & pk as exported environment variables: EC2_CERT and EC2_PRIVATE_KEY.
