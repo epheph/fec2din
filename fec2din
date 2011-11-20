@@ -25,6 +25,9 @@ if ( $1 == "RESERVATION" ) {
 if ( $1 == "INSTANCE" ) {
 	print ""
 	print "Instance: " $2
+	if ( $6 != "running" ) {
+		print "State: " $6
+	}
 	print "AMI: " $3
 	print "Type: " $10
 	print "Public IP: " $17 " (" $4 ")"
