@@ -22,9 +22,13 @@ except NameError:
 		print "Please set env variable"
 		sys.exit(1)
 
+if len(sys.argv) == 2:
+	instance_list = [ sys.argv[1] ]
+else:
+	instance_list = None
 
 ec2_conn = boto.connect_ec2(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
-reservations = ec2_conn.get_all_instances()
+reservations = ec2_conn.get_all_instances(instance_list)
 
 running_instances = {}
 for reservation in reservations:
@@ -47,7 +51,12 @@ for reservation in reservations:
 			print "Days:	%s (%s)" % ( days_up, launch_ts.strftime('%Y-%m-%d') )
 			print "AZ:	%s" % ( instance.placement )
 			print "Group%s:	%s" % ( 's' if ( len(instance.groups) > 1 ) else '', ",".join( [x.name for x in instance.groups] ) )
-			print instance.block_device_mapping
+			root_device = instance.root_device_name if instance.root_device_name else "/dev/sda1?"
+			if instance.root_device_type == 'instance-store':
+				root_type = "ephemeral"
+			elif instance.root_device_type == 'ebs':
+				root_type = "EBS"
+			print "\t%s  ( %s )" % (root_device, root_type )
 			for block_device, mapping in instance.block_device_mapping.items():
 				# ephemeral_mark = "+" if mapping.ebs else "-"
 				print "\t%s" % (  block_device)
@@ -55,22 +64,6 @@ for reservation in reservations:
 			print
 			
 # reduce( lambda x, y: x+y, instance.groups )
-"""
-Instance: i-7a613603
-AMI: ami-5824d631
-Type: m1.xlarge
-Public IP: 23.20.134.129 (ec2-23-20-134-129.compute-1.amazonaws.com)
-Private IP: 10.60.27.53
-Region: us-east-1d
-Public Key: ForeclosureRadar
-Start Date: 2012-06-20
-Security Group: core-db
-Block Devices: 
-	/dev/sdk
-	/dev/sdl
-"""
 			
-
-# pprint( running_instances )
 
 
