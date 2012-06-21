@@ -1,61 +1,76 @@
-#!/bin/bash
+#!/usr/bin/python
 
-set -a
-
-RUN_DIN=0
-
-FILE="" # operate on standard input, unless we set this
-
-if [ "$( tty )" != 'not a tty' ]
-then
-	RUN_DIN=1
-	FILE=$(mktemp -t ec2din)
-	ec2-describe-instances > $FILE
-fi
+import sys
+import os
+import boto
+from pprint import pprint
+from inspect import getmembers
+from datetime import datetime
 
 
-awk '
-BEGIN { FS="	" }
+# You can uncomment and set these, or set the env variables AWSAccessKeyId & AWSSecretKey
+# AWS_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaa"
+# AWS_SECRET_ACCESS_KEY="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
-{
+try:
+	AWS_ACCESS_KEY_ID
+except NameError:
+	try:
+		AWS_ACCESS_KEY_ID=os.environ['AWSAccessKeyId']
+		AWS_SECRET_ACCESS_KEY=os.environ['AWSSecretKey']
+	except KeyError:
+		print "Please set env variable"
+		sys.exit(1)
 
-if ( $1 == "RESERVATION" ) {
-	last_reservation_group=$4
-}
-if ( $1 == "INSTANCE" ) {
-	print ""
-	print "Instance: " $2
-	if ( $6 != "running" ) {
-		print "State: " $6
-	}
-	print "AMI: " $3
-	print "Type: " $10
-	print "Public IP: " $17 " (" $4 ")"
-	print "Private IP: " $18
-	print "Region: " $12
-	print "Public Key: " $7
 
-	split( $11, date_part, "T" )
-	simple_date=date_part[1]
+ec2_conn = boto.connect_ec2(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+reservations = ec2_conn.get_all_instances()
 
-	# Uncomment this if you want time, too...
-	# split( date_part[2], time_part, "+" )
-	# simple_date=simple_date " @ " time_part[1]
-	
-	print "Start Date: " simple_date
+running_instances = {}
+for reservation in reservations:
+	for instance in reservation.instances:
+		if instance.state != "running":
+			sys.stderr.write("Disqualifying instance %s: not running\n" % ( instance.id ) )
+		else:
+			# pprint (getmembers(instance))
+			az = instance.placement
+			instance_type = instance.instance_type
+			running_instances[ (instance_type, az ) ] = running_instances.get( (instance_type, az ) , 0 ) + 1
+			print "= %s =" % instance.id
+			print "AMI:	%s" % instance.image_id
+			print "Type:	%s (%s)" % ( instance.instance_type , instance.architecture  )
+			print "Public:	%s (%s)" % ( instance.ip_address, instance.public_dns_name )
+			print "Public:	%s" % ( instance.private_ip_address )
+			print "PubKey:	%s" % ( instance.key_name )
+			launch_ts = boto.utils.parse_ts(instance.launch_time)
+			days_up = (datetime.now() - launch_ts).days
+			print "Days:	%s (%s)" % ( days_up, launch_ts.strftime('%Y-%m-%d') )
+			print "AZ:	%s" % ( instance.placement )
+			print "Group%s:	%s" % ( 's' if ( len(instance.groups) > 1 ) else '', ",".join( [x.name for x in instance.groups] ) )
+			print instance.block_device_mapping
+			for block_device, mapping in instance.block_device_mapping.items():
+				# ephemeral_mark = "+" if mapping.ebs else "-"
+				print "\t%s" % (  block_device)
+				# pprint( getmembers(mapping))
+			print
+			
+# reduce( lambda x, y: x+y, instance.groups )
+"""
+Instance: i-7a613603
+AMI: ami-5824d631
+Type: m1.xlarge
+Public IP: 23.20.134.129 (ec2-23-20-134-129.compute-1.amazonaws.com)
+Private IP: 10.60.27.53
+Region: us-east-1d
+Public Key: ForeclosureRadar
+Start Date: 2012-06-20
+Security Group: core-db
+Block Devices: 
+	/dev/sdk
+	/dev/sdl
+"""
+			
 
-	security_group = $29
-	if ( length( last_reservation_group ) ) {
-		# friendly name, not always available (VPC)
-		security_group = last_reservation_group
-	}
-	print "Security Group: " security_group
-	print "Block Devices: "
+# pprint( running_instances )
 
-}
-if ( $1 == "BLOCKDEVICE" ) {
-	print "\t" $2
-}
 
-}
-' $FILE
