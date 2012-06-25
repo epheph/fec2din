@@ -14,8 +14,6 @@ from datetime import datetime
 
 ec2_url="https://us-east-1.ec2.amazonaws.com"
 
-
-
 try:
 	AWS_ACCESS_KEY_ID
 except NameError:
@@ -23,7 +21,13 @@ except NameError:
 		AWS_ACCESS_KEY_ID=os.environ['EC2_ACCESS_KEY']
 		AWS_SECRET_ACCESS_KEY=os.environ['EC2_SECRET_KEY']
 	except KeyError:
-		print "Please set env variable"
+		print """Please set environment variables EC2_ACCESS_KEY & EC2_SECRET_KEY
+Please note that while ec2-describe-instances and other CLI tools use
+EC2_CERT & EC2_PRIVATE_KEY, fec2din uses the access key & secret key.
+This would look something like:
+	export EC2_ACCESS_KEY=JFIOQNAKEIFJJAKDLIJA
+	export EC2_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
+"""
 		sys.exit(1)
 
 
@@ -36,10 +40,6 @@ try:
 	ec2_url = os.environ['EC2_URL']
 except KeyError:
 	pass
-
-print ec2_url
-sys.exit()
-
 
 ec2_conn = boto.connect_ec2_endpoint(ec2_url, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 
@@ -54,7 +54,7 @@ running_instances = {}
 for reservation in reservations:
 	for instance in reservation.instances:
 		if instance.state != "running" and instance_list == None:
-			sys.stderr.write("Disqualifying instance %s: not running\n" % ( instance.id ) )
+			sys.stderr.write("Disqualifying instance %s: not running\n\n" % ( instance.id ) )
 		else:
 			# pprint (getmembers(instance))
 			az = instance.placement
@@ -75,6 +75,7 @@ for reservation in reservations:
 			root_device = instance.root_device_name if instance.root_device_name else "/dev/sda1?"
 			if instance.root_device_type == 'instance-store':
 				root_type = "ephemeral"
+				root_device = "ROOT"
 			elif instance.root_device_type == 'ebs':
 				root_type = "EBS"
 			print "\t%s  ( %s )" % (root_device, root_type )
