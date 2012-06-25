@@ -3,8 +3,8 @@
 import sys
 import os
 import boto
-from pprint import pprint
-from inspect import getmembers
+# from pprint import pprint
+# from inspect import getmembers
 from datetime import datetime
 
 
