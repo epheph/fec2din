@@ -12,28 +12,48 @@ from datetime import datetime
 # AWS_ACCESS_KEY_ID="aaaaaaaaaaaaaaaaaaaa"
 # AWS_SECRET_ACCESS_KEY="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
 
+ec2_url="https://us-east-1.ec2.amazonaws.com"
+
+
+
 try:
 	AWS_ACCESS_KEY_ID
 except NameError:
 	try:
-		AWS_ACCESS_KEY_ID=os.environ['AWSAccessKeyId']
-		AWS_SECRET_ACCESS_KEY=os.environ['AWSSecretKey']
+		AWS_ACCESS_KEY_ID=os.environ['EC2_ACCESS_KEY']
+		AWS_SECRET_ACCESS_KEY=os.environ['EC2_SECRET_KEY']
 	except KeyError:
 		print "Please set env variable"
 		sys.exit(1)
+
+
+try:
+	ec2_url = "https://%s.ec2.amazonaws.com" % os.environ['EC2_REGION']
+except KeyError:
+	pass
+
+try:
+	ec2_url = os.environ['EC2_URL']
+except KeyError:
+	pass
+
+print ec2_url
+sys.exit()
+
+
+ec2_conn = boto.connect_ec2_endpoint(ec2_url, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 
 if len(sys.argv) == 2:
 	instance_list = [ sys.argv[1] ]
 else:
 	instance_list = None
 
-ec2_conn = boto.connect_ec2(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 reservations = ec2_conn.get_all_instances(instance_list)
 
 running_instances = {}
 for reservation in reservations:
 	for instance in reservation.instances:
-		if instance.state != "running":
+		if instance.state != "running" and instance_list == None:
 			sys.stderr.write("Disqualifying instance %s: not running\n" % ( instance.id ) )
 		else:
 			# pprint (getmembers(instance))
@@ -44,10 +64,11 @@ for reservation in reservations:
 			print "AMI:	%s" % instance.image_id
 			print "Type:	%s (%s)" % ( instance.instance_type , instance.architecture  )
 			print "Public:	%s (%s)" % ( instance.ip_address, instance.public_dns_name )
-			print "Public:	%s" % ( instance.private_ip_address )
+			print "PrivIP:	%s" % ( instance.private_ip_address )
 			print "PubKey:	%s" % ( instance.key_name )
 			launch_ts = boto.utils.parse_ts(instance.launch_time)
 			days_up = (datetime.now() - launch_ts).days
+			# print "%s %s" % (datetime.now(), launch_ts)
 			print "Days:	%s (%s)" % ( days_up, launch_ts.strftime('%Y-%m-%d') )
 			print "AZ:	%s" % ( instance.placement )
 			print "Group%s:	%s" % ( 's' if ( len(instance.groups) > 1 ) else '', ",".join( [x.name for x in instance.groups] ) )
