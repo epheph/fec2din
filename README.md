@@ -10,6 +10,7 @@ $ pip install boto
 
 Example
 =======
+```
 $ ec2din
 RESERVATION	r-57192e11	103757199432	production
 INSTANCE	i-89ba1299	ami-a7f539ce	ec2-50-99-41-60.compute-1.amazonaws.com	ip-10-99-241-197.ec2.internal	running	production	0		t1.micro	2011-11-09T07:16:45+0000	us-east-1c	aki-805ea7e9			monitoring-disabled	50.99.41.60	10.99.241.197			ebs					paravirtual	xen	sg-c129fe91	default
@@ -31,20 +32,29 @@ Group:	my-security-group, web-server, memcache
 	ROOT  ( ephemeral )
 	/dev/sdl
 	/dev/sdk
+```
 
 Installation
 =================================
 Put fec2din in your path, chmod +x. Ensure boto is installed and your access & secret key are exported as environment variables:
+```
  export EC2_ACCESS_KEY=JFIOQNAKEIFJJAKDLIJA
  export EC2_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
+```
 
 If you are not using the us-east-1 region, you can set alternate endpoints in two ways:
+```
  export EC2_REGION=us-west-1
+```
 or
+```
  export EC2_URL=https://ec2.ap-southeast-1.amazonaws.com
+```
 
 Theoretically, you could set the EC2_URL endpoint to any EC2 compatible endpoint, such as Eucalyptus, using:
+```
  export EC2_URL=https://localhost/services/Eucalyptus
+```
 but I have not tried it yet.
 
 These variables could also be set at the top of the script if you want to hard-code them, but you'll have to reset them everytime you upgrade. I recommend putting them in your ~/.bashrc or wherever your shell wants them.
