@@ -67,7 +67,7 @@ for reservation in reservations:
 			print "PrivIP:	%s" % ( instance.private_ip_address )
 			print "PubKey:	%s" % ( instance.key_name )
 			launch_ts = boto.utils.parse_ts(instance.launch_time)
-			days_up = (datetime.now() - launch_ts).days
+			days_up = (datetime.utcnow() - launch_ts).days
 			# print "%s %s" % (datetime.now(), launch_ts)
 			print "Days:	%s (%s)" % ( days_up, launch_ts.strftime('%Y-%m-%d') )
 			print "AZ:	%s" % ( instance.placement )
