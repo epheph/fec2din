@@ -60,7 +60,14 @@ for reservation in reservations:
       az = instance.placement
       instance_type = instance.instance_type
       running_instances[ (instance_type, az ) ] = running_instances.get( (instance_type, az ) , 0 ) + 1
-      print "= %s =" % instance.id
+      if 'Name' in instance.tags:
+        instance_title = "%s (%s)" % ( instance.tags['Name'], instance.id )
+
+        # We're printing out non-name tags later, this doesn't delete in amazon
+        del instance.tags['Name']
+      else:
+        instance_title = "(%s)" % instance.id
+      print "= %s =" % instance_title
       print "AMI:  %s" % instance.image_id
       print "Type:  %s (%s)" % ( instance.instance_type , instance.architecture  )
       print "Public:  %s (%s)" % ( instance.ip_address, instance.public_dns_name )
@@ -71,6 +78,8 @@ for reservation in reservations:
       print "Days:  %s (%s)" % ( days_up, launch_ts.strftime('%Y-%m-%d') )
       print "AZ:  %s" % ( instance.placement )
       print "Group%s:  %s" % ( 's' if ( len(instance.groups) > 1 ) else '', ",".join( [x.name for x in instance.groups] ) )
+      if len(instance.tags) > 0:
+        print "Tag%s:\t%s" % ( 's' if ( len(instance.tags) > 1 ) else '', "\n\t".join( [tag_key + " => " + tag_val for tag_key,tag_val in instance.tags.items()] ) )
       if instance.root_device_type == 'instance-store':
         root_type = "ephemeral"
         root_device = "ROOT"
@@ -86,7 +95,7 @@ for reservation in reservations:
           root_device = "/dev/sda1?"
           root_type = "EBS"
 
-      print "\t*%s  (%s)" % (root_device, root_type )
+      print "Disks:\t*%s  (%s)" % (root_device, root_type )
       for block_device, mapping in instance.block_device_mapping.items():
         # ephemeral_mark = "+" if mapping.ebs else "-"
         if block_device == root_device:
