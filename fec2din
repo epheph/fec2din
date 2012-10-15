@@ -90,7 +90,6 @@ for reservation in reservations:
             root_type = instance.block_device_mapping[root_device].volume_id
           except KeyError:
             root_type = "EBS"
-          print root_type
         else:
           root_device = "/dev/sda1?"
           root_type = "EBS"
