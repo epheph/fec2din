@@ -1,4 +1,4 @@
-This is a small python script, which makes extensive use of boto, to provide human-readable out similar to ec2-describe-instances (ec2din). fec2din can be run with no arguments or a single argument of a specific instance ID. Simply named "f" + "ec2din", the command can easily be run after viewing the horrific ec2din output by simply typing "f!!" in a modern shell. This simple shortcut is why I left the standard ".py" extension off.
+This is a small python script, which makes extensive use of boto, to provide human-readable out similar to ec2-describe-instances (ec2din). fec2din can be run with no arguments or a single argument of an instance ID, instance type, security group, etc. Simply named "f" + "ec2din", the command can easily be run after viewing the horrific ec2din output by simply typing "f!!" in a modern shell. This simple shortcut is why I left the standard ".py" extension off.
 
 This script requires boto to be installed
 
@@ -8,7 +8,7 @@ or
 
 $ pip install boto
 
-Example
+Simple Example
 =======
 ```
 $ ec2din
@@ -32,6 +32,60 @@ Group:	my-security-group, web-server, memcache
 	ROOT  ( ephemeral )
 	/dev/sdl
 	/dev/sdk
+```
+
+Advanced Examples
+=======
+fec2din can take an argument to filter your ec2 instance result set. This filter can be:
+* Instance ID
+* Instance Type
+* Public IP
+* Private IP
+* Tag "Name"
+* Security Group
+
+When passing this argument, you don't need to specify which of these you are specifying, it will use pattern matching to figure it out, using several API queries only when necessary
+```
+$ fec2din web-servers
+= web1 (i-84913311) =
+AMI:  ami-7d78cd04
+Type:  m1.medium (i386)
+Public:  173.112.242.16 (ec2-173-112-242-16.compute-1.amazonaws.com)
+PrivIP:  10.50.37.201
+PubKey:  my-pub-key
+Days:  98 (2012-09-22)
+AZ:  us-east-1b
+Group:  web-servers
+Disks:  *ROOT  (ephemeral)
+
+= web2 (i-465e2e21) =
+AMI:  ami-7d78cd04
+Type:  m1.medium (i386)
+Public:  173.202.145.67 (ec2-173-202-145-67.compute-1.amazonaws.com)
+PrivIP:  10.178.15.98
+PubKey:  my-pub-key
+Days:  98 (2012-09-22)
+AZ:  us-east-1d
+Group:  web-servers
+Disks:  *ROOT  (ephemeral)
+
+
+$ fec2din m2.2xlarge
+= pgsql-master (i-5fed9c1e) =
+AMI:  ami-7d78cd04
+Type:  m2.2xlarge (x86_64)
+Public:  204.22.88.162 (ec2-204-22-99-162.compute-1.amazonaws.com)
+PrivIP:  10.129.95.27
+PubKey:  secret
+Days:  181 (2012-07-01)
+AZ:  us-east-1a
+Group:  db
+Disks:  *ROOT  (ephemeral)
+        /dev/sdk (vol-996c10fe)
+        /dev/sdl (vol-61eb0128)
+        /dev/sdm (vol-105c449d)
+        /dev/sdn (vol-62155f02)
+
 ```
 
 Installation
