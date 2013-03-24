@@ -73,6 +73,11 @@ if ec2_filter:
     ec2_filter_dict = { "private-ip-address": ec2_filter }
     show_all_instances = True # override, since this can only return 1 instance
     reservations = ec2_conn.get_all_instances(filters=ec2_filter_dict)
+  elif re.match( "^(ip|domU)-.*.ec2.internal$", ec2_filter ):
+    # Private hostname, like ip-10-20-43-129.ec2.internal
+    ec2_filter_dict = { "private-dns-name": ec2_filter }
+    show_all_instances = True # override, since this can only return 1 instance
+    reservations = ec2_conn.get_all_instances(filters=ec2_filter_dict)
   elif re.match( "^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$", ec2_filter ):
     # Public IP, like 23.101.47.232
     ec2_filter_dict = { "ip-address": ec2_filter }
