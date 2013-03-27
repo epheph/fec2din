@@ -1,0 +1,102 @@
+#!/usr/bin/python
+
+import pdb
+
+import argparse
+import sys
+import os
+import boto
+import re
+import time
+# from pprint import pprint
+from datetime import datetime
+
+parser = argparse.ArgumentParser()
+parser.add_argument("ami", nargs='?', type=str,
+                    help="Specify the AMI to launch")
+parser.add_argument("-t", "--type", required=True, help="Instance type (m1.small, m2.2xlarge, etc)")
+parser.add_argument("-z", "--zone", default=False, help="Availability zone")
+parser.add_argument("-g", "--group", required=True, help="Security group")
+parser.add_argument("-a", "--name", required=False, help="System Name (see readme)")
+parser.add_argument("-f", "--file", required=False, help="User data file")
+parser.add_argument("-k", "--key", required=True, help="Public key pair name")
+args = parser.parse_args()
+
+
+ami = args.ami
+type = args.type
+groups = args.group.split(',')
+zone = args.zone # We can omit a zone, let AWS pick the zone if unspecified
+key = args.key # Required
+name = args.name # This is a name we use for 2 purposes: replacing in the file and setting as a tag name
+user_data_file = args.file # User data file, could be omitted
+
+short_name = name.split('.')[0]
+
+
+# You can uncomment and set these, or set the env variables AWSAccessKeyId & AWSSecretKey
+# AWS_ACCESS_KEY="aaaaaaaaaaaaaaaaaaaa"
+# AWS_SECRET_KEY="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+
+ec2_url="https://us-east-1.ec2.amazonaws.com"
+
+try:
+  AWS_ACCESS_KEY
+except NameError:
+  try:
+    AWS_ACCESS_KEY=os.environ['AWS_ACCESS_KEY']
+    AWS_SECRET_KEY=os.environ['AWS_SECRET_KEY']
+  except KeyError:
+    print """Please set environment variables EC2_ACCESS_KEY & EC2_SECRET_KEY
+Please note that while ec2-describe-instances and other CLI tools use
+EC2_CERT & EC2_PRIVATE_KEY, fec2din uses the access key & secret key.
+This would look something like:
+  export AWS_ACCESS_KEY=JFIOQNAKEIFJJAKDLIJA
+  export AWS_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
+"""
+    sys.exit(1)
+
+
+try:
+  ec2_url = "https://ec2.%s.amazonaws.com" % os.environ['EC2_REGION']
+except KeyError:
+  pass
+
+try:
+  ec2_url = os.environ['EC2_URL']
+except KeyError:
+  pass
+
+ec2_conn = boto.connect_ec2_endpoint(ec2_url, AWS_ACCESS_KEY, AWS_SECRET_KEY)
+
+# pdb.set_trace()
+if user_data_file:
+  user_data = open(user_data_file).read().replace("__HOSTNAME__", name )
+else:
+  user_data = None
+
+
+reservation = ec2_conn.run_instances ( image_id = ami, 
+  instance_type = type,
+  security_groups = groups,
+  key_name = key,
+  user_data = user_data  )
+
+instance = reservation.instances[0]
+
+status = instance.update()
+sys.stdout.write( status + "..." )
+while status == 'pending':
+  time.sleep(5)
+  status = instance.update()
+  sys.stdout.write('.')
+
+if status == 'running':
+  sys.stdout.write( " running!\n" )
+  if short_name:
+    instance.add_tag("Name",short_name)
+    print "Tagged as %s" % short_name
+  print "IP: %s" % instance.ip_address
+else:
+  print('Instance status is not "running": ' + status)
+
