@@ -92,8 +92,8 @@ Installation
 =================================
 Put fec2din in your path, chmod +x. Ensure boto is installed and your access & secret key are exported as environment variables:
 ```
- export EC2_ACCESS_KEY=JFIOQNAKEIFJJAKDLIJA
- export EC2_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
+ export AWS_ACCESS_KEY=JFIOQNAKEIFJJAKDLIJA
+ export AWS_SECRET_KEY=3jfioajkle+OnfAEV5OIvj5nLnRy2jfklZRop3nn
 ```
 
 If you are not using the us-east-1 region, you can set alternate endpoints in two ways:
